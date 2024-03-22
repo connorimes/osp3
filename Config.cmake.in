@@ -1,0 +1,5 @@
+@PACKAGE_INIT@
+
+include("${CMAKE_CURRENT_LIST_DIR}/@CONFIG_TARGETS_FILE@")
+
+check_required_components(@CONFIG_REQUIRED_COMPONENTS@)
