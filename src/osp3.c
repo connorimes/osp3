@@ -76,6 +76,7 @@ static int osp3_set_serial_attributes(int fd, unsigned int baud) {
   if (tcgetattr(fd, &t) < 0) {
     return -1;
   }
+  cfmakeraw(&t);
   if ((speed = baud_to_speed(baud)) == B0) {
 #if OSP3_DEBUG
     fprintf(stderr, "Unsupported baud: %u\n", baud);
