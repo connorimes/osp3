@@ -143,7 +143,7 @@ static int osp3_open(const char* filename, int* fd) {
   }
 
   // Open the device file
-  *fd = open(filename, O_RDWR | O_NONBLOCK);
+  *fd = open(filename, O_RDONLY | O_NONBLOCK);
   if (*fd < 0) {
 #if OSP3_DEBUG
     perror(filename);
