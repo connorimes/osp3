@@ -11,7 +11,11 @@
 #include <stdlib.h>
 #include <osp3.h>
 
+#ifdef __APPLE__
+#define PATH_DEFAULT "/dev/tty.usbserial-210"
+#else
 #define PATH_DEFAULT "/dev/ttyUSB0"
+#endif
 
 #define TIMEOUT_MS_DEFAULT 0
 
