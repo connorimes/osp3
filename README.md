@@ -56,12 +56,21 @@ cmake --build . --target uninstall
 
 ### Linking
 
-To link against `osp3`, use `pkg-config` to get compiler and linker flags.
-E.g., in a Makefile:
+If your project uses CMake, find the `OSP3` package and link against its `osp3` library:
 
-```sh
+```cmake
+find_package(OSP3 REQUIRED)
+target_link_libraries(foo PRIVATE OSP3::osp3)
+```
+
+Otherwise use `pkg-config`, e.g., in a Makefile:
+
+```Makefile
 CFLAGS+=$(shell pkg-config --cflags osp3)
 LDFLAGS+=$(shell pkg-config --libs --static osp3)
+
+foo:
+  $(CC) $(CFLAGS) -o foo foo.c $(LDFLAGS)
 ```
 
 The `--static` flag is unnecessary if you built/installed a shared object library.
