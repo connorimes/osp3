@@ -94,8 +94,6 @@ static int osp3_set_serial_attributes(int fd, unsigned int baud) {
 
 static int osp3_open(const char* filename, int* fd) {
   struct stat s;
-  char buf[32];
-  const char* shortname;
 
   // Check if device node exists and is writable
   if (stat(filename, &s) < 0) {
@@ -116,7 +114,9 @@ static int osp3_open(const char* filename, int* fd) {
     return -1;
   }
 
+#ifdef __linux__
   // Get shortname by dropping leading "/dev/"
+  const char* shortname;
   if (!(shortname = strrchr(filename, '/'))) {
     // shouldn't happen since we've already checked filename
     errno = EINVAL;
@@ -128,6 +128,7 @@ static int osp3_open(const char* filename, int* fd) {
   shortname++;
 
   // Check if "/sys/class/tty/<shortname>" exists and is correct type
+  char buf[32];
   snprintf(buf, sizeof(buf), "/sys/class/tty/%s", shortname);
   if (stat(buf, &s) < 0) {
 #if OSP3_DEBUG
@@ -142,6 +143,7 @@ static int osp3_open(const char* filename, int* fd) {
 #endif
     return -1;
   }
+#endif // __linux__
 
   // Open the device file
   *fd = open(filename, O_RDONLY | O_NONBLOCK);
