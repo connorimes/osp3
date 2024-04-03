@@ -195,7 +195,10 @@ static int osp3_poll(osp3_device* dev) {
     }
     assert(line_written > 0);
     assert(line[line_written - 1] == '\n');
-    if (line_written < OSP3_LOG_PROTOCOL_SIZE) {
+    // If the line came from the serial port, we should expect `line_written == OSP3_LOG_PROTOCOL_SIZE`.
+    // However, a line from stdin may not include the '\r' prior to the '\n', so we'll try to be forgiving.
+    // Parsing and checksum should still drop bad messages (unless disabled, but that's the user being reckless).
+    if (line_written < OSP3_LOG_PROTOCOL_SIZE - 1) {
       fprintf(stderr, "Dropping shorter line than expected: %s", line);
     } else if (line_written > OSP3_LOG_PROTOCOL_SIZE) {
       fprintf(stderr, "Dropping longer line than expected: %s", line);
