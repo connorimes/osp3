@@ -177,8 +177,8 @@ int osp3_read_line(osp3_device* dev, unsigned char* buf, size_t len, size_t* tra
 /**
  * Perform a checksum on a log entry.
  *
- * @param log The log entry buffer
- * @param log_sz Must be `>= OSP3_LOG_PROTOCOL_SIZE`
+ * @param log The log entry buffer - doesn't require trailing '\r' and/or '\n', but must null-terminated.
+ * @param log_sz Must be `>= OSP3_LOG_PROTOCOL_SIZE - 1`
  * @param cs8_2s The resulting 2s complement checksum
  * @param cs8_xor The resulting XOR checksum
  * @return 0 on checksum match, 1 on checksum mismatch, -1 on error
@@ -188,8 +188,8 @@ int osp3_log_checksum(const char* log, size_t log_sz, uint8_t* cs8_2s, uint8_t* 
 /**
  * Test the given checksum values against a log entry.
  *
- * @param log The log entry buffer
- * @param log_sz Must be `>= OSP3_LOG_PROTOCOL_SIZE`
+ * @param log The log entry buffer - doesn't require trailing '\r' and/or '\n', but must null-terminated.
+ * @param log_sz Must be `>= OSP3_LOG_PROTOCOL_SIZE - 1`
  * @param cs8_2s The 2s complement checksum
  * @param cs8_xor The XOR checksum
  * @return 0 on checksum match, 1 on checksum mismatch, -1 on error
@@ -199,8 +199,8 @@ int osp3_log_checksum_test(const char* log, size_t log_sz, uint8_t cs8_2s, uint8
 /**
  * Parse a log entry.
  *
- * @param log The log entry buffer
- * @param log_sz Must be `>= OSP3_LOG_PROTOCOL_SIZE`
+ * @param log The log entry buffer - doesn't require trailing '\r' and/or '\n', but must null-terminated.
+ * @param log_sz Must be `>= OSP3_LOG_PROTOCOL_SIZE - 1`
  * @param log_entry The struct to be populated
  * @return 0 on success, 1 if not all fields were parsed, -1 on error
  */

@@ -307,6 +307,12 @@ int osp3_read_line(osp3_device* dev, unsigned char* buf, size_t len, size_t* tra
 #define CS_2COMPL_OFF (INTR_1_OFF + INTR_SZ + 1)
 #define CS_XOR_OFF (CS_2COMPL_OFF + CS_2COMPL_SZ + 1)
 
+// Log length excluding trailing "\r\n" characters.
+#define OSP3_LOG_PAYLOAD_LEN (CS_XOR_OFF + CS_XOR_SZ)
+
+// Check that our sizes and offsets sum up correctly.
+static_assert(OSP3_LOG_PAYLOAD_LEN == OSP3_LOG_PROTOCOL_SIZE - 2, "incorrect log field size/index/offset");
+
 static void osp3_log_checksum_compute(const char* log, uint8_t* cs8_2s, uint8_t* cs8_xor) {
   *cs8_2s = 0;
   *cs8_xor = 0;
@@ -318,7 +324,7 @@ static void osp3_log_checksum_compute(const char* log, uint8_t* cs8_2s, uint8_t*
 }
 
 int osp3_log_checksum(const char* log, size_t log_sz, uint8_t* cs8_2s, uint8_t* cs8_xor) {
-  if (log_sz < OSP3_LOG_PROTOCOL_SIZE) {
+  if (log_sz < OSP3_LOG_PROTOCOL_SIZE - 1) {
     errno = EINVAL;
     return -1;
   }
@@ -327,7 +333,7 @@ int osp3_log_checksum(const char* log, size_t log_sz, uint8_t* cs8_2s, uint8_t* 
 }
 
 int osp3_log_checksum_test(const char* log, size_t log_sz, uint8_t cs8_2s, uint8_t cs8_xor) {
-  if (log_sz < OSP3_LOG_PROTOCOL_SIZE) {
+  if (log_sz < OSP3_LOG_PROTOCOL_SIZE - 1) {
     errno = EINVAL;
     return -1;
   }
@@ -341,12 +347,12 @@ int osp3_log_checksum_test(const char* log, size_t log_sz, uint8_t cs8_2s, uint8
 }
 
 int osp3_log_parse(const char* log, size_t log_sz, osp3_log_entry* log_entry) {
-  if (log_sz < OSP3_LOG_PROTOCOL_SIZE) {
+  if (log_sz < OSP3_LOG_PROTOCOL_SIZE - 1) {
     errno = EINVAL;
     return -1;
   }
   int matched = sscanf(log,
-    "%010lu,%05u,%04u,%05u,%1u,%05u,%04u,%05u,%1u,%02x,%05u,%04u,%05u,%1u,%02x,%"SCNx8",%"SCNx8"\r\n",
+    "%010lu,%05u,%04u,%05u,%1u,%05u,%04u,%05u,%1u,%02x,%05u,%04u,%05u,%1u,%02x,%"SCNx8",%"SCNx8"",
     // Time
     &log_entry->ms,
     // Input Power

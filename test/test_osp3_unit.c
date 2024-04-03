@@ -4,23 +4,31 @@
 #include <osp3.h>
 
 // From the wiki.
-static const char test_log1[OSP3_LOG_PROTOCOL_SIZE] = \
+static const char test_log1[] = \
   "0000815169,15296,0036,00550,0,00000,0000,00000,0,00,00000,0000,00000,0,00,14,12\r\n";
+static_assert(sizeof(test_log1) == OSP3_LOG_PROTOCOL_SIZE + 1, "incorrect log buffer length");
 
 // From the device.
-static const char test_log2[OSP3_LOG_PROTOCOL_SIZE] = \
+static const char test_log2[] = \
   "0343732187,15321,0072,01103,0,00000,0000,00000,0,00,00000,0000,00000,0,00,1c,12\r\n";
-static const char test_log3[OSP3_LOG_PROTOCOL_SIZE] = \
+static_assert(sizeof(test_log2) == OSP3_LOG_PROTOCOL_SIZE + 1, "incorrect log buffer length");
+static const char test_log3[] = \
   "0343732197,15332,0084,01287,0,00000,0000,00000,0,00,00000,0000,00000,0,00,09,17\r\n";
-static const char test_log4[OSP3_LOG_PROTOCOL_SIZE] = \
+static_assert(sizeof(test_log3) == OSP3_LOG_PROTOCOL_SIZE + 1, "incorrect log buffer length");
+static const char test_log4[] = \
   "0343732207,15328,0055,00843,0,00000,0000,00000,0,00,00000,0000,00000,0,00,11,19\r\n";
+static_assert(sizeof(test_log4) == OSP3_LOG_PROTOCOL_SIZE + 1, "incorrect log buffer length");
 
+// Doesn't include the trailing "\r\n".
+static const char test_log_no_newline[] = \
+  "0000815169,15296,0036,00550,0,00000,0000,00000,0,00,00000,0000,00000,0,00,14,12";
+static_assert(sizeof(test_log_no_newline) == OSP3_LOG_PROTOCOL_SIZE - 1, "incorrect log buffer length");
 
 static void test_osp3_log_checksum(void) {
   uint8_t cs8_2s = 0;
   uint8_t cs8_xor = 0;
   // Bad size.
-  assert(osp3_log_checksum(test_log1, sizeof(test_log1) - 1, &cs8_2s, &cs8_xor) == -1);
+  assert(osp3_log_checksum(test_log1, OSP3_LOG_PROTOCOL_SIZE - 2, &cs8_2s, &cs8_xor) == -1);
   // Good size.
   assert(osp3_log_checksum(test_log1, sizeof(test_log1), &cs8_2s, &cs8_xor) == 0);
   assert(cs8_2s == 0x14);
@@ -35,17 +43,19 @@ static void test_osp3_log_checksum(void) {
   assert(cs8_2s == 0x11);
   assert(cs8_xor == 0x19);
   // Bad checksums (modified test_log1).
-  static const char test_log1_bad_2s[OSP3_LOG_PROTOCOL_SIZE] = \
+  static const char test_log1_bad_2s[] = \
     "0000815169,15296,0036,00550,0,00000,0000,00000,0,00,00000,0000,00000,0,00,15,12\r\n";
-  static const char test_log1_bad_xor[OSP3_LOG_PROTOCOL_SIZE] = \
+  static const char test_log1_bad_xor[] = \
     "0000815169,15296,0036,00550,0,00000,0000,00000,0,00,00000,0000,00000,0,00,14,13\r\n";
   assert(osp3_log_checksum(test_log1_bad_2s, sizeof(test_log1_bad_2s), &cs8_2s, &cs8_xor) == 1);
   assert(osp3_log_checksum(test_log1_bad_xor, sizeof(test_log1_bad_xor), &cs8_2s, &cs8_xor) == 1);
+  // No newline characters.
+  assert(osp3_log_checksum(test_log_no_newline, sizeof(test_log_no_newline), &cs8_2s, &cs8_xor) == 0);
 }
 
 static void test_osp3_log_checksum_test(void) {
   // Bad size.
-  assert(osp3_log_checksum_test(test_log1, sizeof(test_log1) - 1, 0x14, 0x12) == -1);
+  assert(osp3_log_checksum_test(test_log1, OSP3_LOG_PROTOCOL_SIZE - 2, 0x14, 0x12) == -1);
   // Good size.
   assert(osp3_log_checksum_test(test_log1, sizeof(test_log1), 0x14, 0x12) == 0);
   assert(osp3_log_checksum_test(test_log2, sizeof(test_log2), 0x1c, 0x12) == 0);
@@ -54,6 +64,8 @@ static void test_osp3_log_checksum_test(void) {
   // Bad checksums.
   assert(osp3_log_checksum_test(test_log1, sizeof(test_log1), 0x15, 0x12) == 1);
   assert(osp3_log_checksum_test(test_log1, sizeof(test_log1), 0x14, 0x13) == 1);
+  // No newline characters.
+  assert(osp3_log_checksum_test(test_log_no_newline, sizeof(test_log_no_newline), 0x14, 0x12) == 0);
 }
 
 static void test_osp3_log_parse(void) {
@@ -61,7 +73,7 @@ static void test_osp3_log_parse(void) {
   // Something that's not 0.
   memset(&log_entry, 0xFF, sizeof(log_entry));
   // Bad size.
-  assert(osp3_log_parse(test_log1, sizeof(test_log1) - 1, &log_entry) == -1);
+  assert(osp3_log_parse(test_log1, OSP3_LOG_PROTOCOL_SIZE - 2, &log_entry) == -1);
   // Good size.
   assert(osp3_log_parse(test_log1, sizeof(test_log1), &log_entry) == 0);
   assert(log_entry.ms == 815169);
@@ -85,6 +97,8 @@ static void test_osp3_log_parse(void) {
   assert(osp3_log_parse(test_log2, sizeof(test_log2), &log_entry) == 0);
   assert(log_entry.checksum8_2s_compl == 0x1c);
   assert(log_entry.checksum8_xor == 0x12);
+  // No newline characters.
+  assert(osp3_log_parse(test_log_no_newline, sizeof(test_log_no_newline), &log_entry) == 0);
 }
 
 int main(void) {
