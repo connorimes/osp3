@@ -33,10 +33,10 @@ static int count = 0;
 static int parse = 1;
 static int checksum = 1;
 
-static const char short_options[] = "hp:b:t:n:";
+static const char short_options[] = "hp::b:t:n:";
 static const struct option long_options[] = {
   {"help",        no_argument,       NULL, 'h'},
-  {"path",        required_argument, NULL, 'p'},
+  {"path",        optional_argument, NULL, 'p'},
   {"baud",        required_argument, NULL, 'b'},
   {"timeout",     required_argument, NULL, 't'},
   {"num",         required_argument, NULL, 'n'},
@@ -53,7 +53,8 @@ static void print_usage(int exit_code) {
           "Usage: osp3-poll [OPTION]...\n"
           "Options:\n"
           "  -h, --help               Print this message and exit\n"
-          "  -p, --path=FILE          Device path (default: %s)\n"
+          "  -p, --path=FILE          Device path (default: %s);\n"
+          "                           No FILE, \"\", or \"-\" uses standard input\n"
           "  -b, --baud=RATE          Device baud rate (default: %u)\n"
           "  -t, --timeout=MS         Read timeout in milliseconds (default: %u)\n"
           "  -n, --num=N              Stop after N log entries\n"
@@ -113,6 +114,61 @@ static void shandle(int sig) {
   }
 }
 
+static int stdin_wait(void) {
+  static const int fd = 0; // stdin
+  int ret = 0;
+  fd_set set;
+  FD_ZERO(&set);
+  FD_SET(fd, &set);
+  struct timespec ts_timeout = {
+    .tv_sec = timeout_ms / 1000,
+    .tv_nsec = (timeout_ms % 1000) * 1000 * 1000,
+  };
+  switch (pselect(fd + 1, &set, NULL, NULL, timeout_ms > 0 ? &ts_timeout : NULL, NULL)) {
+    case -1:
+      // failed
+      ret = -1;
+      break;
+    case 0:
+      // timed out
+      errno = ETIME;
+      ret = -1;
+      break;
+    default:
+      ret = 0;
+      break;
+  }
+  return ret;
+}
+
+static int stdin_read_line(unsigned char* buf, size_t len, size_t* transferred) {
+  *transferred = 0;
+  while (running) {
+    if (stdin_wait() < 0) {
+      return -1;
+    }
+    int c;
+    if ((c = getchar()) == EOF) {
+      break;
+    }
+    buf[(*transferred)] = (unsigned char) c;
+    (*transferred)++;
+    if (c == '\n') {
+      return 0;
+    }
+    if (*transferred == len) {
+      errno = ENOBUFS;
+      return -1;
+    }
+  }
+  running = 0;
+  return -1;
+}
+
+static int read_line(osp3_device* dev, unsigned char* buf, size_t len, size_t* transferred) {
+  return dev == NULL ? stdin_read_line(buf, len, transferred) : osp3_read_line(dev, buf, len, transferred, timeout_ms);
+}
+
 static int osp3_poll(osp3_device* dev) {
   // Print header.
   printf("ms,");
@@ -126,14 +182,14 @@ static int osp3_poll(osp3_device* dev) {
   while (running) {
     char line[OSP3_LINE_LEN_MAX + 1] = { 0 };
     size_t line_written = 0;
-    if (osp3_read_line(dev, (unsigned char*) line, sizeof(line) - 1, &line_written, timeout_ms) < 0) {
+    if (read_line(dev, (unsigned char*) line, sizeof(line) - 1, &line_written) < 0) {
       if (!running) {
         return 0;
       }
       if (errno == ETIME) {
         fprintf(stderr, "Read timeout expired\n");
       } else {
-        perror("osp3_read_line");
+        perror("read_line");
       }
       return 1;
     }
@@ -158,20 +214,21 @@ static int osp3_poll(osp3_device* dev) {
 }
 
 int main(int argc, char** argv) {
-  osp3_device* dev;
+  osp3_device* dev = NULL;
   int ret;
-
-  signal(SIGINT, shandle);
   parse_args(argc, argv);
 
-  if ((dev = osp3_open_device(path, baud)) == NULL) {
-    perror("Failed to open ODROID Smart Power 3 connection");
-    return 1;
+  if (path != NULL && strlen(path) > 0 && strcmp(path, "-")) {
+    signal(SIGINT, shandle);
+    if ((dev = osp3_open_device(path, baud)) == NULL) {
+      perror("Failed to open ODROID Smart Power 3 connection");
+      return 1;
+    }
   }
 
   ret = osp3_poll(dev);
 
-  if (osp3_close(dev)) {
+  if (dev != NULL && osp3_close(dev)) {
     perror("Failed to close ODROID Smart Power 3 connection");
   }
 
