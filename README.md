@@ -78,17 +78,14 @@ The `--static` flag is unnecessary if you built/installed a shared object librar
 
 ## Linux Privileges
 
-To use an ODROID Smart Power 3 without needing sudo/root at runtime, set appropriate [udev](https://en.wikipedia.org/wiki/Udev) privileges.
+By default, sudo/root privileges are usually needed to access the USB device file, e.g., at `/dev/ttyUSB0`.
+To access without requiring sudo/root, add your user to the `dialout` group, e.g.:
 
-You can give access to a specific group, e.g. `plugdev`, by creating/modifying a `udev` config file like `/etc/udev/rules.d/99-osp3.rules`.
-For example, add the following rules:
-
-```
-# OROID Smart Power 3
-SUBSYSTEMS=="usb", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", GROUP="plugdev"
+```sh
+sudo usermod -a -G dialout $USER
 ```
 
-For the new permissions to take effect, the device must be remounted by the kernel - either disconnect and reconnect the device or reboot the system.
+You will need to logout and log back in for the permission changes to take effect.
 
 
 ## Utilities
