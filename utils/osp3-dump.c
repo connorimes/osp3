@@ -116,6 +116,10 @@ int main(int argc, char** argv) {
   osp3_device* dev;
   int ret;
 
+  // Flushing lines improves streaming performance when stdout is non-interactive, e.g., piped to another process.
+  // This enables better (soft) real-time pipeline processing.
+  setlinebuf(stdout);
+
   signal(SIGINT, shandle);
   parse_args(argc, argv);
 

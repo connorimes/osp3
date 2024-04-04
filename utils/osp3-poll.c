@@ -219,6 +219,11 @@ static int osp3_poll(osp3_device* dev) {
 int main(int argc, char** argv) {
   osp3_device* dev = NULL;
   int ret;
+
+  // Flushing lines improves streaming performance when stdout is non-interactive, e.g., piped to another process.
+  // This enables better (soft) real-time pipeline processing.
+  setlinebuf(stdout);
+
   parse_args(argc, argv);
 
   if (path != NULL && strlen(path) > 0 && strcmp(path, "-")) {
