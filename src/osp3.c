@@ -17,10 +17,6 @@
 #include <sys/stat.h>
 #include <osp3.h>
 
-#ifndef OSP3_DEBUG
-  #define OSP3_DEBUG 0
-#endif
-
 typedef struct osp3_rw_buffer {
   unsigned char buf[OSP3_W_MAX_PACKET_SIZE];
   size_t idx;
@@ -78,9 +74,6 @@ static int osp3_set_serial_attributes(int fd, unsigned int baud) {
   }
   cfmakeraw(&t);
   if ((speed = baud_to_speed(baud)) == B0) {
-#if OSP3_DEBUG
-    fprintf(stderr, "Unsupported baud: %u\n", baud);
-#endif
     return -1;
   }
   if (cfsetspeed(&t, speed) < 0) {
@@ -97,16 +90,10 @@ static int osp3_open(const char* filename, int* fd) {
 
   // Check if device node exists and is writable
   if (stat(filename, &s) < 0) {
-#if OSP3_DEBUG
-    perror(filename);
-#endif
     return -1;
   }
   if (!S_ISCHR(s.st_mode)) {
     errno = ENOTTY;
-#if OSP3_DEBUG
-    perror("osp3_open: Not a TTY character device");
-#endif
     return -1;
   }
   if (access(filename, R_OK | W_OK)) {
@@ -120,9 +107,6 @@ static int osp3_open(const char* filename, int* fd) {
   if (!(shortname = strrchr(filename, '/'))) {
     // shouldn't happen since we've already checked filename
     errno = EINVAL;
-#if OSP3_DEBUG
-    perror(filename);
-#endif
     return -1;
   }
   shortname++;
@@ -131,16 +115,10 @@ static int osp3_open(const char* filename, int* fd) {
   char buf[32];
   snprintf(buf, sizeof(buf), "/sys/class/tty/%s", shortname);
   if (stat(buf, &s) < 0) {
-#if OSP3_DEBUG
-    perror(buf);
-#endif
     return -1;
   }
   if (!S_ISDIR(s.st_mode)) {
     errno = ENODEV;
-#if OSP3_DEBUG
-    perror("osp3_open: Not a TTY device");
-#endif
     return -1;
   }
 #endif // __linux__
@@ -148,9 +126,6 @@ static int osp3_open(const char* filename, int* fd) {
   // Open the device file
   *fd = open(filename, O_RDONLY | O_NONBLOCK);
   if (*fd < 0) {
-#if OSP3_DEBUG
-    perror(filename);
-#endif
     return -1;
   }
   return 0;
