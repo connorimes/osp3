@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <osp3.h>
 
 #ifdef __APPLE__
@@ -25,6 +26,7 @@
 // Much bigger than anything an OSP3 should produce.
 #define OSP3_LINE_LEN_MAX 1024
 
+static int path_set = 0;
 static const char* path = PATH_DEFAULT;
 static unsigned int baud = OSP3_BAUD_DEFAULT;
 static unsigned int timeout_ms = TIMEOUT_MS_DEFAULT;
@@ -72,6 +74,7 @@ static void parse_args(int argc, char** argv) {
         print_usage(0);
         break;
       case 'p':
+        path_set = 1;
         path = optarg;
         break;
       case 'b':
@@ -226,7 +229,7 @@ int main(int argc, char** argv) {
 
   parse_args(argc, argv);
 
-  if (path != NULL && strlen(path) > 0 && strcmp(path, "-")) {
+  if (path_set || (isatty(0) && path != NULL && strlen(path) > 0 && strcmp(path, "-"))) {
     signal(SIGINT, shandle);
     if ((dev = osp3_open_device(path, baud)) == NULL) {
       perror("Failed to open ODROID Smart Power 3 connection");

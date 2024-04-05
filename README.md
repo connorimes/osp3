@@ -96,6 +96,19 @@ See their help output for usage.
 * `osp3-dump` - dump the device's serial output.
 * `osp3-poll` - poll the device's serial output for complete log entries.
 
+While `osp3-poll` reads from the serial port by default, it can also read from standard input.
+For example:
+
+```sh
+osp3-dump | osp3-poll
+````
+
+Or, more usefully, if you have UDP logging over wifi configured:
+
+```sh
+netcat -u -l -p 6000 | osp3-poll
+```
+
 
 ## C API
 
