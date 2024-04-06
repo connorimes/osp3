@@ -153,12 +153,20 @@ osp3_device* osp3_open_device(const char* path, unsigned int baud) {
 }
 
 int osp3_close(osp3_device* dev) {
+  if (dev == NULL) {
+    errno = EINVAL;
+    return -1;
+  }
   int ret = close(dev->fd);
   free(dev);
   return ret;
 }
 
 int osp3_flush(osp3_device* dev) {
+  if (dev == NULL) {
+    errno = EINVAL;
+    return -1;
+  }
   dev->rbuf.idx = 0;
   dev->rbuf.rem = 0;
   return tcflush(dev->fd, TCIFLUSH);
@@ -193,6 +201,10 @@ static size_t sz_min(size_t a, size_t b) {
 }
 
 int osp3_read(osp3_device* dev, unsigned char* buf, size_t len, size_t* transferred, unsigned int timeout_ms) {
+  if (dev == NULL || buf == NULL || transferred == NULL) {
+    errno = EINVAL;
+    return -1;
+  }
   *transferred = sz_min(dev->rbuf.rem, len);
   memcpy(buf, &dev->rbuf.buf[dev->rbuf.idx], *transferred);
   assert(dev->rbuf.rem >= *transferred);
@@ -216,6 +228,10 @@ static int lineccpy(void* restrict dst, size_t dst_sz, size_t* written, const vo
 }
 
 int osp3_read_line(osp3_device* dev, unsigned char* buf, size_t len, size_t* transferred, unsigned int timeout_ms) {
+  if (dev == NULL || buf == NULL || transferred == NULL) {
+    errno = EINVAL;
+    return -1;
+  }
   size_t line_seg_written = 0;
   int complete = lineccpy(buf, len, &line_seg_written, &dev->rbuf.buf[dev->rbuf.idx], dev->rbuf.rem);
   *transferred = line_seg_written;
@@ -299,7 +315,7 @@ static void osp3_log_checksum_compute(const char* log, uint8_t* cs8_2s, uint8_t*
 }
 
 int osp3_log_checksum(const char* log, size_t log_sz, uint8_t* cs8_2s, uint8_t* cs8_xor) {
-  if (log_sz < OSP3_LOG_PROTOCOL_SIZE - 1) {
+  if (log == NULL || cs8_2s == NULL || cs8_xor == NULL || log_sz < OSP3_LOG_PROTOCOL_SIZE - 1) {
     errno = EINVAL;
     return -1;
   }
@@ -308,7 +324,7 @@ int osp3_log_checksum(const char* log, size_t log_sz, uint8_t* cs8_2s, uint8_t* 
 }
 
 int osp3_log_checksum_test(const char* log, size_t log_sz, uint8_t cs8_2s, uint8_t cs8_xor) {
-  if (log_sz < OSP3_LOG_PROTOCOL_SIZE - 1) {
+  if (log == NULL || log_sz < OSP3_LOG_PROTOCOL_SIZE - 1) {
     errno = EINVAL;
     return -1;
   }
@@ -322,7 +338,7 @@ int osp3_log_checksum_test(const char* log, size_t log_sz, uint8_t cs8_2s, uint8
 }
 
 int osp3_log_parse(const char* log, size_t log_sz, osp3_log_entry* log_entry) {
-  if (log_sz < OSP3_LOG_PROTOCOL_SIZE - 1) {
+  if (log == NULL || log_entry == NULL || log_sz < OSP3_LOG_PROTOCOL_SIZE - 1) {
     errno = EINVAL;
     return -1;
   }
