@@ -15,6 +15,10 @@
 #include <time.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#if defined(__APPLE__)
+#include <sys/ioctl.h>
+#include <IOKit/serial/ioss.h>
+#endif // defined(__APPLE__)
 #include <osp3.h>
 
 typedef struct osp3_rw_buffer {
@@ -28,7 +32,39 @@ struct osp3_device {
   int fd;
 };
 
-static speed_t baud_to_speed(unsigned int baud) {
+#if defined(__APPLE__)
+static speed_t baud_to_speed_apple(unsigned int baud) {
+  switch (baud) {
+  case 9600:
+  case 19200:
+  case 38400:
+  case 57600:
+  case 115200:
+  case 230400:
+  case 460800:
+  case 500000:
+  case 576000:
+  case 921600:
+    return (speed_t) baud;
+  // Higher baud rates not supported by device.
+  default:
+    break;
+  }
+  errno = EINVAL;
+  return 0;
+}
+
+static int osp3_set_baud_apple(int fd, unsigned int baud) {
+  speed_t speed;
+  if ((speed = baud_to_speed_apple(baud)) == 0 || ioctl(fd, IOSSIOSPEED, &speed) == -1) {
+    return -1;
+  }
+  return 0;
+}
+
+#else
+
+static speed_t baud_to_speed_posix(unsigned int baud) {
   switch (baud) {
   case 9600:
     return B9600;
@@ -36,12 +72,18 @@ static speed_t baud_to_speed(unsigned int baud) {
     return B19200;
   case 38400:
     return B38400;
+#ifdef B57600
   case 57600:
     return B57600;
+#endif
+#ifdef B115200
   case 115200:
     return B115200;
+#endif
+#ifdef B230400
   case 230400:
     return B230400;
+#endif
 #ifdef B460800
   case 460800:
     return B460800;
@@ -66,22 +108,35 @@ static speed_t baud_to_speed(unsigned int baud) {
   return B0;
 }
 
+static int osp3_set_baud_posix(struct termios* t, unsigned int baud) {
+  speed_t speed;
+  if ((speed = baud_to_speed_posix(baud)) == B0 || cfsetspeed(t, speed) < 0) {
+    return -1;
+  }
+  return 0;
+}
+#endif
+
 static int osp3_set_serial_attributes(int fd, unsigned int baud) {
   struct termios t;
-  speed_t speed;
   if (tcgetattr(fd, &t) < 0) {
     return -1;
   }
   cfmakeraw(&t);
-  if ((speed = baud_to_speed(baud)) == B0) {
+#if !defined(__APPLE__)
+  if (osp3_set_baud_posix(&t, baud) < 0) {
     return -1;
   }
-  if (cfsetspeed(&t, speed) < 0) {
-    return -1;
-  }
+#endif // !defined(__APPLE__)
   if (tcsetattr(fd, TCSANOW, &t) < 0) {
     return -1;
   }
+#if defined(__APPLE__)
+  // It's important that this happen after tcsetattr, otherwise it's overridden.
+  if (osp3_set_baud_apple(fd, baud) < 0) {
+    return -1;
+  }
+#endif // defined(__APPLE__)
   return tcflush(fd, TCIFLUSH);
 }
 

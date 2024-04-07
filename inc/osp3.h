@@ -2,7 +2,6 @@
  * A library for managing an ODROID Smart Power 3 (OSP3) device.
  *
  * Supported baud rates: 9600, 19200, 38400, 57600, 115200 (default), 230400, 460800, 500000, 576000, and 921600.
- * However, not all platforms support configuring all baud rates, e.g., macOS is limited.
  *
  * The OSP3 device must first be configured to perform serial logging.
  * Supported logging intervals (some constrained by the baud rate): 5, 10 (default), 50, 100, 500, and 1000 ms.
