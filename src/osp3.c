@@ -1,5 +1,5 @@
 /**
- * A library for managing an ODROID Smart Power 3 device over USB.
+ * A library for using an ODROID Smart Power 3 (OSP3).
  *
  * @author Connor Imes
  * @date 2024-03-19

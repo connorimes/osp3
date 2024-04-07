@@ -1,5 +1,5 @@
 /**
- * A library for managing an ODROID Smart Power 3 (OSP3) device.
+ * A library for using an ODROID Smart Power 3 (OSP3).
  *
  * Supported baud rates: 9600, 19200, 38400, 57600, 115200 (default), 230400, 460800, 500000, 576000, and 921600.
  *
@@ -8,7 +8,6 @@
  *
  * Log entries may be read from the device at the logging interval configured on the device.
  * The max serial packet size is less than that of a log entry, so multiple reads are necessary to capture an entry.
- * The user is responsible for identifying and handling log entry slices.
  *
  * @author Connor Imes
  * @date 2024-03-19
