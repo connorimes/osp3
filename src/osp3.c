@@ -186,7 +186,7 @@ static int osp3_open(const char* filename, int* fd) {
   return 0;
 }
 
-osp3_device* osp3_open_device(const char* path, unsigned int baud) {
+osp3_device* osp3_open_path(const char* path, unsigned int baud) {
   osp3_device* dev;
   if (path == NULL) {
     errno = EINVAL;

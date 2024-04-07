@@ -118,7 +118,7 @@ typedef struct osp3_log_entry {
  * @param baud The baud rate (or 0 for default)
  * @return A osp3_device handle, or NULL on failure
  */
-osp3_device* osp3_open_device(const char* path, unsigned int baud);
+osp3_device* osp3_open_path(const char* path, unsigned int baud);
 
 /**
  * Close an OSP3 device handle.

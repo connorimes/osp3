@@ -25,11 +25,11 @@ static const char test_log_no_newline[] = \
   "0000815169,15296,0036,00550,0,00000,0000,00000,0,00,00000,0000,00000,0,00,14,12";
 static_assert(sizeof(test_log_no_newline) == OSP3_LOG_PROTOCOL_SIZE - 1, "incorrect log buffer length");
 
-static void test_osp3_open_device_bad(void) {
+static void test_osp3_open_path_bad(void) {
   errno = 0;
-  assert(osp3_open_device(NULL, 0) == NULL);
+  assert(osp3_open_path(NULL, 0) == NULL);
   assert(errno == EINVAL);
-  // TODO: To test bad baud values without trying to open a device, osp3_open_device would have to be refactored.
+  // TODO: To test bad baud values without trying to open a device, osp3_open_path would have to be refactored.
 }
 
 static void test_osp3_close_bad(void) {
@@ -188,7 +188,7 @@ static void test_osp3_log_parse(void) {
 }
 
 int main(void) {
-  test_osp3_open_device_bad();
+  test_osp3_open_path_bad();
   test_osp3_close_bad();
   test_osp3_flush_bad();
   test_osp3_read_bad();

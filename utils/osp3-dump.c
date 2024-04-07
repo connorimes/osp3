@@ -119,7 +119,7 @@ int main(int argc, char** argv) {
   signal(SIGINT, shandle);
   parse_args(argc, argv);
 
-  if ((dev = osp3_open_device(path, baud)) == NULL) {
+  if ((dev = osp3_open_path(path, baud)) == NULL) {
     perror("Failed to open ODROID Smart Power 3 connection");
     return 1;
   }

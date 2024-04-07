@@ -227,7 +227,7 @@ int main(int argc, char** argv) {
 
   if (path_set || (isatty(0) && path != NULL && strlen(path) > 0 && strcmp(path, "-"))) {
     signal(SIGINT, shandle);
-    if ((dev = osp3_open_device(path, baud)) == NULL) {
+    if ((dev = osp3_open_path(path, baud)) == NULL) {
       perror("Failed to open ODROID Smart Power 3 connection");
       return 1;
     }

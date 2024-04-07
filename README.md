@@ -127,7 +127,7 @@ int main(void) {
   const char* path = "/dev/ttyUSB0";
   unsigned int baud = OSP3_BAUD_DEFAULT;
   osp3_device* dev;
-  if ((dev = osp3_open_device(path, baud)) == NULL) {
+  if ((dev = osp3_open_path(path, baud)) == NULL) {
     perror("Failed to open ODROID Smart Power 3 connection");
     return 1;
   }
