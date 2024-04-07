@@ -151,7 +151,7 @@ static int osp3_open(const char* filename, int* fd) {
     errno = ENOTTY;
     return -1;
   }
-  if (access(filename, R_OK | W_OK)) {
+  if (access(filename, R_OK)) {
     perror(filename);
     return -1;
   }
