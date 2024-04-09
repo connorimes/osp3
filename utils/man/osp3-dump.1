@@ -1,0 +1,48 @@
+.TH "osp3-dump" "1" "2024-04-08" "osp3" "ODROID Smart Power 3 Utilities"
+.SH "NAME"
+.LP
+osp3\-dump \- dump serial output from an ODROID Smart Power 3
+.SH "SYNPOSIS"
+.LP
+\fBosp3\-dump\fP
+.SH "DESCRIPTION"
+.LP
+Dump serial output from an ODROID Smart Power 3.
+.SH "OPTIONS"
+.LP
+.TP
+\fB\-h\fP, \fB\-\-help\fP
+Print the help message and exit.
+.TP
+\fB\-p\fP, \fB\-\-path\fP
+Device path (default: /dev/ttyUSB0).
+.TP
+\fB\-b\fP, \fB\-\-baud\fP
+Device baud rate (default: 115200).
+.TP
+\fB\-t\fP, \fB\-\-timeout\fP
+Read timeout in milliseconds (default: 0).
+.br
+Use 0 for blocking read.
+.SH "EXAMPLES"
+.TP
+\fBosp3\-dump\fP
+Use default settings.
+.TP
+\fBosp3\-dump \-p /dev/ttyUSB1\fP
+Use the device at /dev/ttyUSB1.
+.TP
+\fBosp3\-dump \-b 921600\fP
+Use baud rate 921600.
+.TP
+\fBosp3\-dump \-t 50\fP
+Use a 50 millisecond read timeout.
+.TP
+\fBosp3\-dump \-p /dev/ttyUSB2 \-b 9600 \-t 1000\fP
+Use the device at /dev/ttyUSB2 with baud rate 9600 and a 1 second timeout.
+.SH "BUGS"
+.LP
+Report bugs upstream at <https://github.com/energymon/osp3>
+.SH "SEE ALSO"
+.LP
+\fBosp3\-poll\fP(1)

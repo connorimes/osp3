@@ -10,3 +10,6 @@ install(TARGETS osp3-dump
                 osp3-poll
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
                 COMPONENT OSP3_Utils_Runtime)
+install(DIRECTORY man/
+        DESTINATION ${CMAKE_INSTALL_MANDIR}/man1
+        COMPONENT OSP3_Utils_Runtime)

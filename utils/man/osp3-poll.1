@@ -1,0 +1,66 @@
+.TH "osp3-poll" "1" "2024-04-08" "osp3" "ODROID Smart Power 3 Utilities"
+.SH "NAME"
+.LP
+osp3\-poll \- poll log entries from an ODROID Smart Power 3
+.SH "SYNPOSIS"
+.LP
+\fBosp3\-poll\fP
+.SH "DESCRIPTION"
+.LP
+Poll log entries from an ODROID Smart Power 3.
+.SH "OPTIONS"
+.LP
+.TP
+\fB\-h\fP, \fB\-\-help\fP
+Print the help message and exit.
+.TP
+\fB\-p\fP, \fB\-\-path\fP
+Device path (default: /dev/ttyUSB0).
+.br
+No file, "", or "\-" uses standard input.
+.TP
+\fB\-b\fP, \fB\-\-baud\fP
+Device baud rate (default: 115200).
+.TP
+\fB\-t\fP, \fB\-\-timeout\fP
+Read timeout in milliseconds (default: 2000).
+.br
+Use 0 for blocking read.
+.TP
+\fB\-n\fP, \fB\-\-num\fP
+Stop after N log entries.
+.TP
+\fB\-\-no\-parse\fP
+Disable log entry parsing verification.
+.TP
+\fB\-\-no\-checksum\fP
+Disable log entry checksum verification.
+.SH "EXAMPLES"
+.TP
+\fBosp3\-poll\fP
+Use default settings.
+.TP
+\fBosp3\-poll \-p /dev/ttyUSB1\fP
+Use the device at /dev/ttyUSB1.
+.TP
+\fBosp3\-poll \-b 921600\fP
+Use baud rate 921600.
+.TP
+\fBosp3\-poll \-t 50\fP
+Use a 50 millisecond read timeout.
+.TP
+\fBosp3\-poll \-n 100\fP
+Stop after 100 log entries are read.
+.TP
+\fBosp3\-poll \-p /dev/ttyUSB2 \-b 9600 \-t 1000 \-n 500\fP
+Poll the device at /dev/ttyUSB2 with baud rate 9600 and a 1 second timeout,
+stopping after 500 log entries.
+.TP
+\fBosp3\-poll \-\-no\-parse \-\-no\-checksum\fP
+Poll without parsing or checksum verification (not recommended).
+.SH "BUGS"
+.LP
+Report bugs upstream at <https://github.com/energymon/osp3>
+.SH "SEE ALSO"
+.LP
+\fBosp3\-dump\fP(1)
