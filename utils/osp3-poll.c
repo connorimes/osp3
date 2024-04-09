@@ -197,12 +197,12 @@ static int osp3_poll(osp3_device* dev) {
     // If the line came from the serial port, we should expect `line_written == OSP3_LOG_PROTOCOL_SIZE`.
     // However, a line from stdin may not include the '\r' prior to the '\n', so we'll try to be forgiving.
     // Parsing and checksum should still drop bad messages (unless disabled, but that's the user being reckless).
-    if (line_written < OSP3_LOG_PROTOCOL_SIZE - 1) {
-      fprintf(stderr, "Dropping shorter line than expected: %s", line);
-    } else if (line_written > OSP3_LOG_PROTOCOL_SIZE) {
-      fprintf(stderr, "Dropping longer line than expected: %s", line);
+    if (parse && line_written < OSP3_LOG_PROTOCOL_SIZE - 1) {
+      fprintf(stderr, "Log entry parsing failed (too short): %s", line);
+    } else if (parse && line_written > OSP3_LOG_PROTOCOL_SIZE) {
+      fprintf(stderr, "Log entry parsing failed (too long): %s", line);
     } else if (parse && osp3_log_parse(line, OSP3_LOG_PROTOCOL_SIZE, &log_entry)) {
-      fprintf(stderr, "Log entry parsing failed: %s", line);
+      fprintf(stderr, "Log entry parsing failed (bad format): %s", line);
     } else if (checksum && osp3_log_checksum(line, OSP3_LOG_PROTOCOL_SIZE, &cs8_2s, &cs8_xor)) {
       fprintf(stderr, "Log entry checksum failed (cs8_2s=%02x, cs8_xor=%02x): %s", cs8_2s, cs8_xor, line);
     } else {
