@@ -21,8 +21,10 @@ enable_testing()
 
 # Libraries
 
-add_library(osp3 src/osp3.c)
-target_include_directories(osp3 PRIVATE ${PROJECT_SOURCE_DIR}/inc
+add_library(osp3 src/osp3.c
+                 src/osp3i-common.c
+                 $<IF:$<PLATFORM_ID:Darwin>,src/osp3i-serial-darwin.c,src/osp3i-serial-posix.c>)
+target_include_directories(osp3 PRIVATE ${PROJECT_SOURCE_DIR}/src
                                 PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/inc>
                                        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/osp3>)
 set_target_properties(osp3 PROPERTIES PUBLIC_HEADER "${PROJECT_SOURCE_DIR}/inc/osp3.h"

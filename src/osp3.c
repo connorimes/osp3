@@ -6,185 +6,12 @@
  */
 #include <assert.h>
 #include <errno.h>
-#include <fcntl.h>
 #include <inttypes.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <termios.h>
-#include <time.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#if defined(__APPLE__)
-#include <sys/ioctl.h>
-#include <IOKit/serial/ioss.h>
-#endif // defined(__APPLE__)
 #include <osp3.h>
-
-typedef struct osp3_rw_buffer {
-  unsigned char buf[OSP3_W_MAX_PACKET_SIZE];
-  size_t idx;
-  size_t rem;
-} osp3_rw_buffer;
-
-struct osp3_device {
-  osp3_rw_buffer rbuf;
-  int fd;
-};
-
-#if defined(__APPLE__)
-static speed_t baud_to_speed_apple(unsigned int baud) {
-  switch (baud) {
-  case 9600:
-  case 19200:
-  case 38400:
-  case 57600:
-  case 115200:
-  case 230400:
-  case 460800:
-  case 500000:
-  case 576000:
-  case 921600:
-    return (speed_t) baud;
-  // Higher baud rates not supported by device.
-  default:
-    break;
-  }
-  errno = EINVAL;
-  return 0;
-}
-
-static int osp3_set_baud_apple(int fd, unsigned int baud) {
-  speed_t speed;
-  if ((speed = baud_to_speed_apple(baud)) == 0 || ioctl(fd, IOSSIOSPEED, &speed) == -1) {
-    return -1;
-  }
-  return 0;
-}
-
-#else
-
-static speed_t baud_to_speed_posix(unsigned int baud) {
-  switch (baud) {
-  case 9600:
-    return B9600;
-  case 19200:
-    return B19200;
-  case 38400:
-    return B38400;
-#ifdef B57600
-  case 57600:
-    return B57600;
-#endif
-#ifdef B115200
-  case 115200:
-    return B115200;
-#endif
-#ifdef B230400
-  case 230400:
-    return B230400;
-#endif
-#ifdef B460800
-  case 460800:
-    return B460800;
-#endif
-#ifdef B500000
-  case 500000:
-    return B500000;
-#endif
-#ifdef B576000
-  case 576000:
-    return B576000;
-#endif
-#ifdef B921600
-  case 921600:
-    return B921600;
-#endif
-  // Higher baud rates not supported by device.
-  default:
-    break;
-  }
-  errno = EINVAL;
-  return B0;
-}
-
-static int osp3_set_baud_posix(struct termios* t, unsigned int baud) {
-  speed_t speed;
-  if ((speed = baud_to_speed_posix(baud)) == B0 || cfsetspeed(t, speed) < 0) {
-    return -1;
-  }
-  return 0;
-}
-#endif
-
-static int osp3_set_serial_attributes(int fd, unsigned int baud) {
-  struct termios t;
-  if (tcgetattr(fd, &t) < 0) {
-    return -1;
-  }
-  cfmakeraw(&t);
-#if !defined(__APPLE__)
-  if (osp3_set_baud_posix(&t, baud) < 0) {
-    return -1;
-  }
-#endif // !defined(__APPLE__)
-  if (tcsetattr(fd, TCSANOW, &t) < 0) {
-    return -1;
-  }
-#if defined(__APPLE__)
-  // It's important that this happen after tcsetattr, otherwise it's overridden.
-  if (osp3_set_baud_apple(fd, baud) < 0) {
-    return -1;
-  }
-#endif // defined(__APPLE__)
-  return tcflush(fd, TCIFLUSH);
-}
-
-static int osp3_open(const char* filename, int* fd) {
-  struct stat s;
-
-  // Check if device node exists and is writable
-  if (stat(filename, &s) < 0) {
-    return -1;
-  }
-  if (!S_ISCHR(s.st_mode)) {
-    errno = ENOTTY;
-    return -1;
-  }
-  if (access(filename, R_OK)) {
-    perror(filename);
-    return -1;
-  }
-
-#ifdef __linux__
-  // Get shortname by dropping leading "/dev/"
-  const char* shortname;
-  if (!(shortname = strrchr(filename, '/'))) {
-    // shouldn't happen since we've already checked filename
-    errno = EINVAL;
-    return -1;
-  }
-  shortname++;
-
-  // Check if "/sys/class/tty/<shortname>" exists and is correct type
-  char buf[32];
-  snprintf(buf, sizeof(buf), "/sys/class/tty/%s", shortname);
-  if (stat(buf, &s) < 0) {
-    return -1;
-  }
-  if (!S_ISDIR(s.st_mode)) {
-    errno = ENODEV;
-    return -1;
-  }
-#endif // __linux__
-
-  // Open the device file
-  *fd = open(filename, O_RDONLY | O_NONBLOCK);
-  if (*fd < 0) {
-    return -1;
-  }
-  return 0;
-}
+#include "osp3i.h"
 
 osp3_device* osp3_open_path(const char* path, unsigned int baud) {
   osp3_device* dev;
@@ -195,12 +22,12 @@ osp3_device* osp3_open_path(const char* path, unsigned int baud) {
   if ((dev = calloc(1, sizeof(osp3_device))) == NULL) {
     return NULL;
   }
-  if (osp3_open(path, &dev->fd) < 0) {
+  if (osp3i_open_path(dev, path, baud > 0 ? baud : OSP3_BAUD_DEFAULT) < 0) {
     free(dev);
     return NULL;
   }
-  if (osp3_set_serial_attributes(dev->fd, baud > 0 ? baud : OSP3_BAUD_DEFAULT) < 0) {
-    close(dev->fd);
+  if (osp3_flush(dev) < 0) {
+    osp3i_close(dev);
     free(dev);
     return NULL;
   }
@@ -212,7 +39,7 @@ int osp3_close(osp3_device* dev) {
     errno = EINVAL;
     return -1;
   }
-  int ret = close(dev->fd);
+  int ret = osp3i_close(dev);
   free(dev);
   return ret;
 }
@@ -224,31 +51,7 @@ int osp3_flush(osp3_device* dev) {
   }
   dev->rbuf.idx = 0;
   dev->rbuf.rem = 0;
-  return tcflush(dev->fd, TCIFLUSH);
-}
-
-static ssize_t osp3_read_buf(int fd, unsigned char* buf, size_t buflen, unsigned int timeout_ms) {
-  ssize_t ret = -1;
-  fd_set set;
-  FD_ZERO(&set);
-  FD_SET(fd, &set);
-  struct timespec ts_timeout = {
-    .tv_sec = timeout_ms / 1000,
-    .tv_nsec = (timeout_ms % 1000) * 1000 * 1000,
-  };
-  switch (pselect(fd + 1, &set, NULL, NULL, timeout_ms > 0 ? &ts_timeout : NULL, NULL)) {
-    case -1:
-      // failed
-      break;
-    case 0:
-      // timed out
-      errno = ETIME;
-      break;
-    default:
-      ret = read(fd, buf, buflen);
-      break;
-  }
-  return ret;
+  return osp3i_flush(dev);
 }
 
 static size_t sz_min(size_t a, size_t b) {
@@ -266,7 +69,7 @@ int osp3_read(osp3_device* dev, unsigned char* buf, size_t len, size_t* transfer
   dev->rbuf.rem -= *transferred;
   dev->rbuf.idx = dev->rbuf.rem > 0 ? dev->rbuf.idx + *transferred : 0;
   if (*transferred < len) {
-    ssize_t bytes_read = osp3_read_buf(dev->fd, &buf[*transferred], len - *transferred, timeout_ms);
+    ssize_t bytes_read = osp3i_read(dev, &buf[*transferred], len - *transferred, timeout_ms);
     if (bytes_read < 0) {
       return -1;
     }
@@ -301,7 +104,7 @@ int osp3_read_line(osp3_device* dev, unsigned char* buf, size_t len, size_t* tra
       errno = ENOBUFS;
       return -1;
     }
-    ssize_t bytes_read = osp3_read_buf(dev->fd, packet, packet_sz, timeout_ms);
+    ssize_t bytes_read = osp3i_read(dev, packet, packet_sz, timeout_ms);
     if (bytes_read < 0) {
       return -1;
     }
