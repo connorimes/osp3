@@ -177,6 +177,7 @@ static int osp3_poll(osp3_device* dev) {
   printf("mV_1,mA_1,mW_1,onoff_1,interrupts_1,");
   printf("CheckSum8_2s_Complement,CheckSum8_Xor\n");
   osp3_log_entry log_entry;
+  int first = 1;
   uint8_t cs8_2s;
   uint8_t cs8_xor;
   while (running) {
@@ -192,6 +193,15 @@ static int osp3_poll(osp3_device* dev) {
         perror("read_line");
       }
       return 1;
+    }
+    // It's common for the first line to be incomplete - if so, silently drop it.
+    if (first) {
+      first = 0;
+      // For the edge case where `line_written == OSP3_LOG_PROTOCOL_SIZE - 1`, prefer the risk of dropping a good line
+      // over parsing failures below (but only for this first line).
+      if (line_written < OSP3_LOG_PROTOCOL_SIZE) {
+        continue;
+      }
     }
     assert(line_written > 0);
     assert(line[line_written - 1] == '\n');
