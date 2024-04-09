@@ -38,7 +38,8 @@ static void print_usage(int exit_code) {
           "  -h, --help               Print this message and exit\n"
           "  -p, --path=FILE          Device path (default: %s)\n"
           "  -b, --baud=RATE          Device baud rate (default: %u)\n"
-          "  -t, --timeout=MS         Read timeout in milliseconds (default: %u)\n",
+          "  -t, --timeout=MS         Read timeout in milliseconds (default: %u)\n"
+          "                           Use 0 for blocking read\n",
           PATH_DEFAULT, OSP3_BAUD_DEFAULT, TIMEOUT_MS_DEFAULT);
   exit(exit_code);
 }

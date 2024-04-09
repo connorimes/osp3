@@ -55,6 +55,7 @@ static void print_usage(int exit_code) {
           "                           No FILE, \"\", or \"-\" uses standard input\n"
           "  -b, --baud=RATE          Device baud rate (default: %u)\n"
           "  -t, --timeout=MS         Read timeout in milliseconds (default: %u)\n"
+          "                           Use 0 for blocking read\n"
           "  -n, --num=N              Stop after N log entries\n"
           "  --no-parse               Disable log entry parsing verification\n"
           "  --no-checksum            Disable log entry checksum verification\n",
