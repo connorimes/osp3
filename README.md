@@ -4,6 +4,9 @@ A library and tools for an [ODROID Smart Power 3](https://wiki.odroid.com/access
 
 > NOTE: If you're using a first generation [ODROID Smart Power](https://wiki.odroid.com/old_product/accessory/odroidsmartpower) device, see the [hosp](https://github.com/energymon/hosp) project instead.
 
+The `osp3` library is designed to support soft real-time power/energy monitoring in applications.
+The library handles the USB serial connection and exposes functions to read and parse log lines and verify checksums.
+
 This project is tested using a device running SmartPower3 firmware v2.2 (20230518), though may work with devices running v1.7 (20211214) or newer.
 Older firmware versions use a different logging protocol.
 
@@ -96,6 +99,9 @@ See their help output for usage.
 * `osp3-dump` - dump the device's serial output.
 * `osp3-poll` - poll the device's serial output for complete log entries.
 
+The default timeout in `osp3-poll` exceeds the maximum configurable logging interval so as to be tolerant of any device configuration without blocking indefinitely.
+If you have stricter timing considerations, consider decreasing the timeout using the `-t/--timeout` option to more closely match the device's configured logging interval.
+
 While `osp3-poll` reads from the serial port by default, it can also read from standard input.
 For example:
 
@@ -103,11 +109,14 @@ For example:
 osp3-dump | osp3-poll
 ````
 
-Or, more usefully, if you have UDP logging over wifi configured:
+Or, more usefully, if you have WiFi UDP logging configured:
 
 ```sh
 netcat -u -l -p 6000 | osp3-poll
 ```
+
+> HINT: WiFi logging is likely to be both higher latency and less reliable than a wired serial connection.
+> If you find that reads are timing out but you can tolerate the latency impact, consider increasing the `osp3-poll` read timeout or set it to 0 to use blocking reads.
 
 
 ## C API
