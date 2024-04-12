@@ -22,5 +22,7 @@ jobs:
             -Wcast-qual -Wdisabled-optimization -Wendif-labels -Wfloat-conversion -Wfloat-equal -Wformat=2 -Wformat-nonliteral \
             -Winline -Wmissing-declarations -Wmissing-noreturn -Wmissing-prototypes -Wnested-externs -Wpointer-arith -Wshadow \
             -Wsign-conversion -Wstrict-prototypes -Wstack-protector -Wundef -Wwrite-strings -Werror"
-          cmake -DCMAKE_C_FLAGS="$CFLAGS" -DCMAKE_BUILD_TYPE=Release -S . -B _build
-          cmake --build _build/ -v
+          cmake -DCMAKE_C_FLAGS="$CFLAGS" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=install -S . -B build
+          cmake --build build/ -v
+          ctest --test-dir build/ -VV
+          cmake --build build/ --target install
